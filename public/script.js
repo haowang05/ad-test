@@ -1,110 +1,82 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- 阶段与元素获取 ---
-    const stages = {
-        agree: document.getElementById('agree-stage'),
-        main: document.getElementById('main-stage'),
-    };
-    const agreeButton = document.getElementById('agreeButton');
-    const videoContainer = document.getElementById('video-container');
+
+    // --- DOM 元素获取 ---
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
+    const agreementOverlay = document.getElementById('agreement-overlay');
+    const agreeButton = document.getElementById('agreeButton');
+    const adText = document.getElementById('ad-text');
+    const genderEl = document.getElementById('gender');
+    const ageEl = document.getElementById('age');
+    const categoryEl = document.getElementById('category');
+    const locationEl = document.getElementById('location');
+    const loaderLine = document.querySelector('.loader-line-container');
+    const retryButton = document.getElementById('retryButton');
     const snapshotImage = document.getElementById('snapshot');
     const countdownOverlay = document.getElementById('countdown-overlay');
     const countdownText = document.getElementById('countdown-text');
-    const retryButton = document.getElementById('retryButton');
-    
-    // --- 信息显示元素 ---
-    const genderBox = document.getElementById('gender-box');
-    const ageBox = document.getElementById('age-box');
-    const locationBox = document.getElementById('location-box');
-    const categoryBox = document.getElementById('category-box');
-    const adBox = document.getElementById('ad-box');
-    
+
+    // --- 状态变量 ---
     let modelsLoaded = false;
-    let detectionInterval = null;
-    let locationInfo = { city: '获取中', country: '地区...' };
+    let detectionInterval;
+    let userDetection = null; // 用于存储检测到的用户信息
+    let isProcessing = false; // 综合状态锁，防止在倒计时或处理中重复触发
 
-    // --- 初始化 ---
-    function initialize() {
-        stages.agree.classList.add('active');
-        stages.main.classList.remove('active');
-        loadModels();
-    }
-
-    // --- 模型加载 ---
+    // --- 初始化和模型加载 ---
     async function loadModels() {
+        const MODEL_URL = '/models';
         try {
-            updateInfoBox(locationBox, '正在加载AI模型...');
             await Promise.all([
-                faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-                faceapi.nets.faceLandmark68TinyNet.loadFromUri('/models'),
-                faceapi.nets.ageGenderNet.loadFromUri('/models'),
+                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+                faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL),
             ]);
             modelsLoaded = true;
-            updateInfoBox(locationBox, '模型加载成功');
-            fetchLocation(); // 模型加载后获取地理位置
+            console.log("AI 模型加载完毕");
         } catch (error) {
             console.error("模型加载失败:", error);
-            updateInfoBox(locationBox, '模型加载失败', true);
+            agreementOverlay.innerHTML = "<p>Can not load models, please refresh the page.</p>";
         }
     }
-
-    // --- 地理位置获取 ---
-    async function fetchLocation() {
-        try {
-            updateInfoBox(locationBox, '正在获取地理位置...');
-            const response = await fetch('/api/location');
-            if (!response.ok) throw new Error('网络响应错误');
-            const data = await response.json();
-            locationInfo = data;
-            updateInfoBox(locationBox, `${data.country}, ${data.city}`);
-        } catch (error) {
-            console.error('获取地理位置失败:', error);
-            updateInfoBox(locationBox, '位置获取失败', true);
-            locationInfo = { city: '未知', country: '未知' };
-        }
-    }
-
-    // --- 用户同意后启动 ---
-    agreeButton.addEventListener('click', () => {
-        stages.agree.classList.remove('active');
-        stages.main.classList.add('active');
-        startCameraAndDetection();
-    });
-
-    // --- 摄像头与识别逻辑 ---
-    async function startCameraAndDetection() {
-        if (!modelsLoaded) {
-            alert('AI模型尚未加载完成，请稍候...');
-            return;
-        }
-        resetUI();
-        snapshotImage.style.display = 'none';
-        video.style.display = 'block';
-
+    
+    // --- 摄像头与人脸识别 ---
+    async function startVideo() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
             video.srcObject = stream;
         } catch (err) {
-            console.error("无法访问摄像头:", err);
-            alert('无法访问摄像头，请检查权限设置。');
+            console.error("Can not access camera:", err);
+            adText.textContent = "Can not access camera, please check permissions.";
         }
-
-        detectionInterval = setInterval(async () => {
-            const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withAgeAndGender();
-            if (detections) {
-                clearInterval(detectionInterval);
-                detectionInterval = null;
-                startCountdown(detections);
-            }
-        }, 500);
     }
 
-    // --- 倒计时逻辑 ---
-    function startCountdown(detectionData) {
+    function startFaceDetection() {
+        if (!video.srcObject || isProcessing) return;
+        const displaySize = { width: video.clientWidth, height: video.clientHeight };
+        faceapi.matchDimensions(canvas, displaySize);
+
+        detectionInterval = setInterval(async () => {
+            if (isProcessing || !video.srcObject) return;
+
+            const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+                .withFaceLandmarks(true)
+                .withAgeAndGender();
+            
+            if (detections.length > 0 && !isProcessing) {
+                isProcessing = true; // 锁定
+                clearInterval(detectionInterval);
+                userDetection = detections[0]; // 存储检测结果
+                startCountdown(); // 开始倒计时
+            }
+        }, 500); // 降低检测频率，优化性能
+    }
+
+    // --- 新增：倒计时功能 ---
+    function startCountdown() {
         let count = 3;
         countdownOverlay.style.display = 'flex';
-        countdownText.textContent = `准备！${count}`;
+        countdownText.textContent = count;
+
         const countdownInterval = setInterval(() => {
             count--;
             if (count > 0) {
@@ -112,82 +84,140 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 clearInterval(countdownInterval);
                 countdownOverlay.style.display = 'none';
-                processUserData(detectionData);
+                processUserData(userDetection); // 倒计时结束，处理数据
             }
         }, 1000);
     }
 
-    // --- 处理数据并调用API ---
+    // --- 数据处理与两步 API 调用 ---
     async function processUserData(detection) {
-        // 1. 截取快照并停止视频流
+        // 1. 停止视频流并截取快照
         const snapshotCanvas = document.createElement('canvas');
         snapshotCanvas.width = video.videoWidth;
         snapshotCanvas.height = video.videoHeight;
-        snapshotCanvas.getContext('2d').drawImage(video, 0, 0);
+        snapshotCanvas.getContext('2d').drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
         snapshotImage.src = snapshotCanvas.toDataURL('image/png');
-        snapshotImage.style.display = 'block';
-        video.style.display = 'none';
+
         if (video.srcObject) {
             video.srcObject.getTracks().forEach(track => track.stop());
         }
-
-        // 2. 更新基本信息
-        const gender = detection.gender === 'male' ? '男性' : '女性';
-        const age = Math.round(detection.age);
-        updateInfoBox(genderBox, gender);
-        updateInfoBox(ageBox, `约 ${age} 岁`);
         
-        const userData = { gender, age, location: `${locationInfo.country}, ${locationInfo.city}` };
+        video.style.display = 'none';
+        canvas.style.display = 'none';
+        snapshotImage.style.display = 'block';
+        retryButton.style.display = 'block';
 
+        const gender = detection.gender === 'male' ? 'Male' : 'Female';
+        const age = Math.round(detection.age);
+        genderEl.textContent = gender;
+        ageEl.textContent = `About ${age} `;
+
+        // --- 开始两步请求 ---
+        loaderLine.style.display = 'block';
+        
+        // 2. 获取位置信息
+        locationEl.textContent = "Loading...";
+        const locationData = await fetchLocation();
+        const adPayload = { gender, age };
+        if (locationData.city && locationData.city !== 'Unknown' && locationData.city !== 'Unknown City') {
+            adPayload.location = locationData.city;
+            locationEl.textContent = `${locationData.country}, ${locationData.city}`;
+        } else {
+            locationEl.textContent = '----';
+        }
+
+        // 3. 第一步：获取类别并立即更新UI
+        categoryEl.textContent = "Loading...";
+        const categoryData = await fetchCategory(adPayload);
+        if(categoryData.category) {
+            categoryEl.textContent = categoryData.category;
+            adPayload.category = categoryData.category; // 将获取到的类别加入payload，用于下一步
+        } else {
+            categoryEl.textContent = "Error";
+            loaderLine.style.display = 'none';
+            return;
+        }
+
+        // 4. 第二步：获取广告语并更新UI
+        adText.textContent = "Generating";
+        const adData = await fetchAdSlogan(adPayload);
+        adText.style.opacity = '0';
+        setTimeout(() => {
+            adText.textContent = adData.ad;
+            adText.style.opacity = '1';
+        }, 300);
+
+        loaderLine.style.display = 'none';
+    }
+    
+    // --- API 调用函数 (已拆分) ---
+    async function fetchLocation() {
         try {
-            // 3. 获取广告类别
-            updateInfoBox(categoryBox, '正在分析类别...');
-            const categoryResponse = await fetch('/api/get-category', {
+            const response = await fetch('/api/location');
+            return await response.json();
+        } catch (error) { return { country: 'Unknown', city: 'Unknown City' }; }
+    }
+
+    async function fetchCategory(userInfo) {
+        try {
+            const response = await fetch('/api/get-category', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userData),
+                body: JSON.stringify(userInfo),
             });
-            if (!categoryResponse.ok) throw new Error('获取类别失败');
-            const { category } = await categoryResponse.json();
-            updateInfoBox(categoryBox, category);
-
-            // 4. 获取广告内容
-            updateInfoBox(adBox, '正在生成内容...');
-            const adResponse = await fetch('/api/get-ad', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...userData, category }),
-            });
-            if (!adResponse.ok) throw new Error('获取广告失败');
-            const { ad } = await adResponse.json();
-            updateInfoBox(adBox, ad);
-
+            if (!response.ok) throw new Error('Can not get category');
+            return await response.json();
         } catch (error) {
-            console.error("API调用失败:", error);
-            updateInfoBox(categoryBox, "分析失败", true);
-            updateInfoBox(adBox, "生成失败", true);
-        } finally {
-            retryButton.style.display = 'block';
+            console.error("Can not get category:", error);
+            return { category: "Error" };
         }
     }
-    
-    // --- UI 更新与重置 ---
-    function updateInfoBox(element, text, isError = false) {
-        element.textContent = text;
-        if (isError) element.classList.add('error');
-        else element.classList.remove('error');
+
+    async function fetchAdSlogan(userInfo) {
+        try {
+            const response = await fetch('/api/get-ad', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userInfo),
+            });
+            if (!response.ok) throw new Error('Can not get ad slogan');
+            return await response.json();
+        } catch (error) {
+            console.error("Can not get ad slogan:", error);
+            return { ad: "Error" };
+        }
     }
-    
-    function resetUI() {
-        const boxes = [genderBox, ageBox, locationBox, categoryBox, adBox];
-        boxes.forEach(box => updateInfoBox(box, '---'));
+
+    // --- 重置函数 ---
+    function resetState() {
+        isProcessing = false;
+        userDetection = null;
+        
+        snapshotImage.style.display = 'none';
         retryButton.style.display = 'none';
-        fetchLocation();
+        video.style.display = 'block';
+        canvas.style.display = 'block';
+
+        genderEl.textContent = '----';
+        ageEl.textContent = '----';
+        locationEl.textContent = '----';
+        categoryEl.textContent = '----';
+        adText.textContent = 'Advertisment generated by AI';
+        loaderLine.style.display = 'none';
+        
+        startVideo();
     }
 
-    // --- 重试按钮 ---
-    retryButton.addEventListener('click', startCameraAndDetection);
+    // --- 事件监听 ---
+    agreeButton.addEventListener('click', () => {
+        if (!modelsLoaded) return;
+        agreementOverlay.style.opacity = '0';
+        setTimeout(() => agreementOverlay.style.display = 'none', 500);
+        startVideo();
+    });
 
-    // --- 初始化页面 ---
-    initialize();
+    video.addEventListener('play', startFaceDetection);
+    retryButton.addEventListener('click', resetState);
+
+    loadModels();
 });

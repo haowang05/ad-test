@@ -1,22 +1,21 @@
 {
   "name": "ai-ad-demo",
   "version": "1.0.0",
-  "description": "An AI-powered ad generation demo using face-api.js and LLMs.",
+  "description": "AI-powered ad generation based on real-time facial analysis.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
   "keywords": [
     "ai",
+    "ad",
     "face-api",
-    "llm",
-    "express"
+    "llm"
   ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.19.2",
-    "node-fetch": "^2.7.0"
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7"
   }
 }
