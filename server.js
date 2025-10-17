@@ -100,30 +100,35 @@ app.post("/api/get-ad", async (req, res) => {
 // --- IP 地址识别 API (已更新并增加日志) ---
 app.get("/api/location", async (req, res) => {
     try {
-        // --- 新增日志：用于调试 IP 地址 ---
+        // --- 关键修复：手动解析 X-Forwarded-For ---
         console.log("===== 正在尝试获取 IP 地址 =====");
-        console.log("req.ip (Express 解析):", req.ip);
-        console.log("req.ips (代理链):", req.ips);
         console.log("X-Forwarded-For Header:", req.headers['x-forwarded-for']);
-        console.log("X-Real-IP Header:", req.headers['x-real-ip']);
-        console.log("req.connection.remoteAddress (直接连接):", req.connection.remoteAddress);
-        console.log("=================================");
+        
+        // X-Forwarded-For 包含一个 IP 列表，格式为: client, proxy1, proxy2
+        // 我们需要的是第一个 IP (client)
+        const xForwardedFor = req.headers['x-forwarded-for'];
+        
+        // 优先从 X-Forwarded-For 获取第一个 IP
+        // 否则回退到 Express 解析的 req.ip (用于本地开发)
+        const ipToQuery = xForwardedFor ? xForwardedFor.split(',')[0].trim() : req.ip;
 
-        // 在设置 `trust proxy` 后, `req.ip` 会自动返回真实的客户端 IP 地址
-        const ip = req.ip;
+        console.log(`最终决定查询的 IP: ${ipToQuery}`);
+        // --- 修复结束 ---
 
-        // 本地开发环境的判断依然保留
-        if (!ip || ip === "::1" || ip === "127.0.0.1") {
-             console.log("检测为本地开发环境 IP，返回 '开发环境'。");
+        const ip = ipToQuery; // 使用我们新解析的 IP
+
+        // 本地开发环境的判断依然保留 (并增强了对其它私有IP的判断)
+        if (!ip || ip === "::1" || ip === "127.0.0.1" || ip.startsWith('10.') || ip.startsWith('192.168.') || (ip.startsWith('172.') && (parseInt(ip.split('.')[1], 10) >= 16 && parseInt(ip.split('.')[1], 10) <= 31))) {
+             console.log("检测为本地/私有 IP，返回 '开发环境'。");
              return res.json({ city: '开发环境', country: '本地网络' });
         }
-        
+
         console.log(`正在查询 IP: ${ip} (使用 ip-api.com)`);
         const response = await fetch(`http://ip-api.com/json/${ip}`);
         const data = await response.json();
         
         console.log("ip-api.com 响应:", data); // 记录来自 API 的响应
-
+        
         if (data.status === 'success') {
             res.json({ 
                 city: data.city || 'Unknown City', 
