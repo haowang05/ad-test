@@ -1,14 +1,12 @@
-/* --- Global Styles & Fonts --- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
 
 :root {
-    --bg-color: #121212;
-    --surface-color: #1E1E1E;
-    --primary-text: #E0E0E0;
-    --secondary-text: #A0A0A0;
-    --accent-color: #4CAF50;
-    --error-color: #EF5350;
-    --border-radius: 12px;
+    --bg-color: #000000;
+    --card-bg-color: #1a1a1a;
+    --text-color: #e0e0e0;
+    --label-color: #888888;
+    --accent-color: #a3ff00;
+    --border-color: #333333;
 }
 
 * {
@@ -18,208 +16,232 @@
 }
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     background-color: var(--bg-color);
-    color: var(--primary-text);
+    color: var(--text-color);
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    padding: 20px;
+    padding: 24px;
 }
 
-/* --- Main Container & Staging --- */
-.container {
+.main-container {
+    display: flex;
+    gap: 24px;
     width: 100%;
-    max-width: 1000px;
-    margin: auto;
+    max-width: 1200px;
+    height: 600px;
 }
 
-.stage {
-    display: none; /* Hide stages by default */
-}
-
-.stage.active {
-    display: flex; /* Show the active stage */
-}
-
-/* --- Agreement Stage --- */
-#agree-stage {
-    justify-content: center;
-    align-items: center;
-    min-height: 80vh;
-}
-
-.agree-card {
-    background-color: var(--surface-color);
-    padding: 40px;
-    border-radius: var(--border-radius);
-    text-align: center;
-    max-width: 500px;
-    border: 1px solid #333;
-}
-
-.agree-card h1 {
-    font-size: 2rem;
-    margin-bottom: 16px;
-}
-
-.agree-card p {
-    color: var(--secondary-text);
-    line-height: 1.6;
-    margin-bottom: 24px;
-}
-
-.agree-button {
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.agree-button:hover {
-    background-color: #5cb85c;
-}
-
-/* --- Main Interaction Stage Layout --- */
-#main-stage {
-    width: 100%;
-    gap: 20px;
-}
-
-.left-panel {
-    flex: 2; /* Takes up 2/3 of the space */
+.video-section, .info-section {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
 }
 
-.right-panel {
-    flex: 1; /* Takes up 1/3 of the space */
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+.video-section {
+    flex: 2;
 }
 
-/* --- Video & Snapshot Container --- */
-#video-container {
+.info-section {
+    flex: 1;
+}
+
+.video-container {
     position: relative;
     width: 100%;
-    padding-top: 56.25%; /* 16:9 Aspect Ratio */
-    background-color: #000;
-    border-radius: var(--border-radius);
+    height: 70%;
+    background-color: var(--card-bg-color);
+    border-radius: 16px;
     overflow: hidden;
+    border: 1px solid var(--border-color);
 }
 
-#video, #snapshot {
+.video-container video, .video-container canvas, .snapshot-image {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 16px;
 }
 
-#snapshot {
-    display: none; /* Hidden by default */
+.snapshot-image {
+    display: none; /* 初始隐藏 */
 }
 
-/* --- Overlays (Countdown & Retry) --- */
-#countdown-overlay {
+/* 新增：倒计时样式 */
+.countdown-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: none; /* Hidden by default */
+    z-index: 15;
+    display: none; /* 初始隐藏 */
     justify-content: center;
     align-items: center;
-    font-size: 4rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+#countdown-text {
+    font-size: 120px;
     font-weight: 700;
     color: white;
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+    text-shadow: 0 0 20px rgba(0,0,0,0.5);
+    animation: countdown-pulse 1s infinite;
 }
+
+@keyframes countdown-pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
 
 .retry-button {
     position: absolute;
-    bottom: 20px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    display: none; /* 初始隐藏 */
+    padding: 12px 28px;
     background-color: var(--accent-color);
-    color: white;
+    color: #111;
     border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: bold;
     cursor: pointer;
-    display: none; /* Hidden by default */
-    transition: background-color 0.2s ease;
-    z-index: 10;
+    box-shadow: 0 4px 15px rgba(163, 255, 0, 0.3);
+    transition: all 0.2s ease-in-out;
 }
 
 .retry-button:hover {
-    background-color: #5cb85c;
+    transform: translate(-50%, -50%) scale(1.05);
+    box-shadow: 0 6px 20px rgba(163, 255, 0, 0.4);
 }
 
-/* --- Info Boxes --- */
-.info-box {
-    background-color: var(--surface-color);
-    border-radius: var(--border-radius);
-    padding: 20px;
-    font-size: 1.1rem;
+
+.agreement-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 10;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
-    border: 1px solid #333;
-    min-height: 80px;
-    transition: all 0.3s ease;
+    padding: 20px;
+    transition: opacity 0.5s ease;
 }
 
-.right-panel .info-box {
+.agreement-content {
+    max-width: 400px;
+}
+
+.agreement-content h2 {
+    font-size: 24px;
+    margin-bottom: 16px;
+    color: #fff;
+}
+
+.agreement-content p {
+    font-size: 14px;
+    color: var(--text-color);
+    margin-bottom: 24px;
+    line-height: 1.6;
+}
+
+.agree-button {
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #000;
+    background-color: var(--accent-color);
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.agree-button:hover {
+    transform: scale(1.05);
+}
+
+
+.info-box {
+    background-color: var(--card-bg-color);
+    border-radius: 16px;
+    padding: 20px;
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border: 1px solid var(--border-color);
 }
 
 .ad-box {
-    flex-grow: 1; /* Takes remaining space in left panel */
-    line-height: 1.6;
+    height: 30%;
+    position: relative;
     border: 1px solid var(--accent-color);
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+    box-shadow: 0 0 15px rgba(163, 255, 0, 0.2);
 }
 
-.category-box {
+.info-label {
+    font-size: 14px;
+    color: var(--label-color);
+    margin-bottom: 8px;
+}
+
+.info-value {
+    font-size: 20px;
     font-weight: 500;
-    border: 1px solid #555;
 }
 
-.info-box.error {
-    color: var(--error-color);
-    border-color: var(--error-color);
+.ad-text {
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.5;
+    transition: opacity 0.5s ease;
 }
 
-/* --- Responsive Design --- */
-@media (max-width: 768px) {
-    #main-stage {
-        flex-direction: column;
-    }
-
-    .left-panel, .right-panel {
-        width: 100%;
-    }
-
-    .right-panel {
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-
-    .right-panel .info-box {
-        flex-basis: calc(50% - 10px); /* Two boxes per row */
-    }
+.info-tag {
+    position: absolute;
+    bottom: 12px;
+    left: 20px;
+    font-size: 12px;
+    color: #888;
 }
+
+.loader-line-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: transparent;
+    overflow: hidden;
+    display: none;
+}
+
+.loader-line {
+    width: 100%;
+    height: 100%;
+    background-color: var(--accent-color);
+    animation: loading-animation 1.5s infinite linear;
+}
+
+@keyframes loading-animation {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
