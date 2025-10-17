@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 个性化内容生成</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- 使用 CDN 加载 face-api.js -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="script.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- 同意阶段 -->
+        <div id="agree-stage" class="stage">
+            <div class="agree-card">
+                <h1>欢迎体验</h1>
+                <p>本项目将通过摄像头进行瞬时面部特征分析，以生成个性化内容。您的图像仅用于实时计算，不会被存储或上传。请同意以继续。</p>
+                <button id="agreeButton" class="agree-button">我同意</button>
+            </div>
+        </div>
+
+        <!-- 主交互阶段 -->
+        <div id="main-stage" class="stage">
+            <div class="left-panel">
+                <div id="video-container">
+                    <video id="video" autoplay muted playsinline></video>
+                    <img id="snapshot" src="" alt="Snapshot">
+                    <div id="countdown-overlay">
+                        <span id="countdown-text">3</span>
+                    </div>
+                    <button id="retryButton" class="retry-button">重 试</button>
+                </div>
+                <div id="ad-box" class="info-box ad-box">
+                    ---
+                </div>
+            </div>
+            <div class="right-panel">
+                <div id="gender-box" class="info-box">---</div>
+                <div id="age-box" class="info-box">---</div>
+                <div id="location-box" class="info-box">---</div>
+                <div id="category-box" class="info-box category-box">---</div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
