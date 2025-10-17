@@ -15,10 +15,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // (API 和 LLM 调用部分无需修改，保持原样)
 const AD_CATEGORIES = [
-  "艺术与娱乐", "汽车", "商业与金融", "职业", "教育", "家庭与育儿",
-  "食品与饮料", "健康与健身", "爱好与兴趣", "家居与园艺", "法律、政府与政治",
-  "新闻", "个人理财", "宠物", "房地产", "科学", "购物", "社会",
-  "体育", "风格与时尚", "技术与计算", "旅游", "天气"
+   "Arts & Entertainment", "Automotive", "Business & Finance", "Careers", "Education", "Family & Parenting",
+  "Food & Drink", "Health & Fitness", "Hobbies & Interests", "Home & Garden", "Law, Government & Politics",
+  "News", "Personal Finance", "Pets", "Real Estate", "Science", "Shopping", "Society",
+  "Sports", "Style & Fashion", "Technology & Computing", "Travel", "Weather"
 ];
 
 async function callLLM(prompt) {
@@ -85,7 +85,7 @@ app.post("/api/get-ad", async (req, res) => {
             userInfoForPrompt += ` from ${location}`;
         }
 
-        const adPrompt = `Create a modern, appealing ad slogan for "${category}", targeted at ${userInfoForPrompt}. Keep it under 25 words.`;
+        const adPrompt = `Create a modern, appealing ad slogan for "${category}", targeted at ${userInfoForPrompt}. 第一句是广告语，第二句是具有引导/转化性质的具体内容，旨在引导用户进行下一步行动比如：购买、下载、注册、访问等等。要求：现代、有吸引力，30词左右的英文。仅显示广告主体本身。不要显示Prompt中的无关信息`;
         const adContent = await callLLM(adPrompt);
 
         res.json({ ad: adContent || `Explore the infinite possibilities of ${category}!` });

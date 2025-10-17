@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("AI 模型加载完毕");
         } catch (error) {
             console.error("模型加载失败:", error);
-            agreementOverlay.innerHTML = "<p>模型加载失败，请刷新页面重试。</p>";
+            agreementOverlay.innerHTML = "<p>Model loading failed. Please refresh the page and try again.</p>";
         }
     }
     
@@ -107,19 +107,19 @@ document.addEventListener('DOMContentLoaded', () => {
         snapshotImage.style.display = 'block';
         retryButton.style.display = 'block';
 
-        const gender = detection.gender === 'male' ? '男性' : '女性';
+        const gender = detection.gender === 'male' ? 'Male' : 'Female';
         const age = Math.round(detection.age);
         genderEl.textContent = gender;
-        ageEl.textContent = `约 ${age} 岁`;
+        ageEl.textContent = `About ${age}`;
 
         // --- 开始两步请求 ---
         loaderLine.style.display = 'block';
         
         // 2. 获取位置信息
-        locationEl.textContent = "获取中...";
+        locationEl.textContent = "Fetching...";
         const locationData = await fetchLocation();
         const adPayload = { gender, age };
-        if (locationData.city && locationData.city !== '未知城市' && locationData.city !== '本地') {
+        if (locationData.city && locationData.city !== 'Unknown City' && locationData.city !== 'Local') {
             adPayload.location = locationData.city;
             locationEl.textContent = `${locationData.country}, ${locationData.city}`;
         } else {
@@ -127,19 +127,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 3. 第一步：获取类别并立即更新UI
-        categoryEl.textContent = "分析中...";
+        categoryEl.textContent = "Analyzing...";
         const categoryData = await fetchCategory(adPayload);
         if(categoryData.category) {
             categoryEl.textContent = categoryData.category;
             adPayload.category = categoryData.category; // 将获取到的类别加入payload，用于下一步
         } else {
-            categoryEl.textContent = "获取失败";
+            categoryEl.textContent = "Failed to retrieve";
             loaderLine.style.display = 'none';
             return;
         }
 
         // 4. 第二步：获取广告语并更新UI
-        adText.textContent = "生成专属内容...";
+        adText.textContent = "Generating your content...";
         const adData = await fetchAdSlogan(adPayload);
         adText.style.opacity = '0';
         setTimeout(() => {
@@ -180,11 +180,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(userInfo),
             });
-            if (!response.ok) throw new Error('获取广告语失败');
+            if (!response.ok) throw new Error('Failed to generate ad slogan');
             return await response.json();
         } catch (error) {
             console.error("生成广告失败:", error);
-            return { ad: "内容生成失败，请重试。" };
+            return { ad: "Content generation failed. Please try again." };
         }
     }
 
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ageEl.textContent = '----';
         locationEl.textContent = '----';
         categoryEl.textContent = '----';
-        adText.textContent = 'AI 生成的个性化广告';
+        adText.textContent = 'AI-Generated Personalized Ad';
         loaderLine.style.display = 'none';
         
         startVideo();

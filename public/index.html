@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 个性化广告生成</title>
+    <title>AI Personalized Ad Generation</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="/script.js"></script>
@@ -15,9 +15,9 @@
                 <!-- 初始同意遮罩层 -->
                 <div id="agreement-overlay" class="agreement-overlay">
                     <div class="agreement-content">
-                        <h2>开启智能体验</h2>
-                        <p>请授权使用您的摄像头。系统将通过分析您的面部特征（不会存储任何图像）来生成个性化的AI内容。</p>
-                        <button id="agreeButton" class="agree-button">同意并开始</button>
+                        <h2>Enable Smart Experience</h2>
+                        <p>Please authorize camera access. The system will analyze your facial features (no images will be stored) to generate personalized AI content.</p>
+                        <button id="agreeButton" class="agree-button">Agree & Start</button>
                     </div>
                 </div>
 
@@ -32,33 +32,33 @@
 
                 <!-- 快照和重试按钮 -->
                 <img id="snapshot" class="snapshot-image" alt="用户快照">
-                <button id="retryButton" class="retry-button">重 试</button>
+                <button id="retryButton" class="retry-button">Try Again</button>
             </div>
 
             <div id="ad-box" class="info-box ad-box">
                 <div class="loader-line-container">
                     <div class="loader-line"></div>
                 </div>
-                <p id="ad-text" class="ad-text">AI 生成的个性化广告</p>
+                <p id="ad-text" class="ad-text">AI-Generated Personalized Ad</p>
                 <span class="info-tag">AI-Generated</span>
             </div>
         </div>
 
         <div class="info-section">
             <div class="info-box">
-                <p class="info-label">性别</p>
+                <p class="info-label">Gender</p>
                 <p id="gender" class="info-value">----</p>
             </div>
             <div class="info-box">
-                <p class="info-label">年龄</p>
+                <p class="info-label">Age</p>
                 <p id="age" class="info-value">----</p>
             </div>
             <div class="info-box">
-                <p class="info-label">广告类别</p>
+                <p class="info-label">Category</p>
                 <p id="category" class="info-value">----</p>
             </div>
             <div class="info-box">
-                <p class="info-label">地理位置</p>
+                <p class="info-label">Location</p>
                 <p id="location" class="info-value">----</p>
             </div>
         </div>
