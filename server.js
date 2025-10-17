@@ -97,20 +97,33 @@ app.post("/api/get-ad", async (req, res) => {
 });
 
 
-// --- IP 地址识别 API (已更新) ---
+// --- IP 地址识别 API (已更新并增加日志) ---
 app.get("/api/location", async (req, res) => {
     try {
+        // --- 新增日志：用于调试 IP 地址 ---
+        console.log("===== 正在尝试获取 IP 地址 =====");
+        console.log("req.ip (Express 解析):", req.ip);
+        console.log("req.ips (代理链):", req.ips);
+        console.log("X-Forwarded-For Header:", req.headers['x-forwarded-for']);
+        console.log("X-Real-IP Header:", req.headers['x-real-ip']);
+        console.log("req.connection.remoteAddress (直接连接):", req.connection.remoteAddress);
+        console.log("=================================");
+
         // 在设置 `trust proxy` 后, `req.ip` 会自动返回真实的客户端 IP 地址
         const ip = req.ip;
 
         // 本地开发环境的判断依然保留
         if (!ip || ip === "::1" || ip === "127.0.0.1") {
+             console.log("检测为本地开发环境 IP，返回 '开发环境'。");
              return res.json({ city: '开发环境', country: '本地网络' });
         }
-
+        
+        console.log(`正在查询 IP: ${ip} (使用 ip-api.com)`);
         const response = await fetch(`http://ip-api.com/json/${ip}`);
         const data = await response.json();
         
+        console.log("ip-api.com 响应:", data); // 记录来自 API 的响应
+
         if (data.status === 'success') {
             res.json({ 
                 city: data.city || 'Unknown City', 
@@ -118,6 +131,7 @@ app.get("/api/location", async (req, res) => {
             });
         } else {
             // 如果 API 查询失败，也返回一个明确的信息
+            console.log(`IP API 查询失败: ${data.message || 'Unknown error'}`);
             res.json({ city: 'Unknown', country: 'Location' });
         }
     } catch (error) {
@@ -130,4 +144,3 @@ app.get("/api/location", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);
 });
-
